@@ -2,33 +2,47 @@ import tkinter as tk
 import os
 from tkinter import ttk
 from tkinter.filedialog import askopenfilename
+import time
 
 MIROPRESS_EXTENSION = 'mir'
+
+def removeThings():
+    global fileName
+    global input_var
+    global output_var
+    input_var.set('No File Chosen')
+    output_var.set('')
+    fileName = ''
 
 
 def compressClicked():
     global status_var
+    global time_var
     global MIROPRESS_EXTENSION
     global fileName
     global statusLabel
     if not fileName:
         status_var.set('Invalid Input')
         statusLabel.config(fg='red')
+        removeThings()
         return
     compressedFileName = fileName[:fileName.rfind('.')+1] + MIROPRESS_EXTENSION
-    print("compress")
+
     try:
-        print(fileName)
+        startTime = time.time()
         os.system('python3 LZcompress.py ' + fileName + ' ' + compressedFileName)
+        time_var.set(str(time.time()-startTime))
         status_var.set('Compressed Succesfully')
         statusLabel.config(fg='green')
+        output_var.set(compressedFileName[compressedFileName[:compressedFileName.rfind('/')].rfind('/'):])
     except:
-        print("something went wrong")
         status_var.set('Something went wrong')
         statusLabel.config(fg='red')
+        removeThings()
     
 def extractClicked():
     global status_var
+    global output_var
     global MIROPRESS_EXTENSION
     global fileName
     global statusLabel
@@ -37,16 +51,20 @@ def extractClicked():
     if not fileName or not decompressedExt:
         status_var.set('Invalid Input')
         statusLabel.config(fg='red')
+        removeThings()
         return
     decompressedFileName = fileName[:fileName.rfind('.')+1] + decompressedExt
     try:
+        startTime = time.time()
         os.system('python3 LZdecompress.py ' + fileName + ' ' + decompressedFileName)
+        time_var.set(str(time.time()-startTime))
         status_var.set('Extracted Succesfully')
         statusLabel.config(fg='green')
+        output_var.set(decompressedFileName[decompressedFileName[:decompressedFileName.rfind('/')].rfind('/'):])
     except:
-        print("something went wrong")
         status_var.set('Something went wrong')
         statusLabel.config(fg='red')
+        removeThings()
     
 
 
@@ -55,6 +73,8 @@ def chooseClicked():
     global fileName
     global input_var
     fileName = askopenfilename()
+    if fileName:
+        status_var.set('')
     labelText = fileName[fileName[:fileName.rfind('/')].rfind('/'):]
     input_var.set(labelText)
 
@@ -92,7 +112,7 @@ inputFileNameLabel.place(y = 50, x = int(window_width)/2 - 20)
 
 # Label for Output File Name
 output_var = tk.StringVar(master)
-output_var.set("as")
+output_var.set("")
 outputFileNameLabel = tk.Label(master, textvariable=output_var)
 outputFileNameLabel.place(y = 80, x = int(window_width)/2 - 20)
 
@@ -100,12 +120,28 @@ outputFileNameLabel.place(y = 80, x = int(window_width)/2 - 20)
 status_var = tk.StringVar(master)
 status_var.set("")
 statusLabel = tk.Label(master, textvariable=status_var)
-statusLabel.place(y = 3, x = int(window_width)/2 - 15)
+statusLabel.place(y = 12, x = int(window_width)/2, anchor=tk.CENTER)
 
-# ProgressBar
-mpb = ttk.Progressbar(master, orient ="horizontal",length = 350, mode ="determinate")
-mpb.place(y = 24, x = 25)
-mpb["maximum"] = 100
-mpb["value"] = 5
+
+# Label for Status Text
+statusText_var = tk.StringVar(master)
+statusText_var.set("Status:")
+statusTestLabel = tk.Label(master, textvariable=statusText_var)
+statusTestLabel.place(y = 12, x = 54, anchor=tk.CENTER)
+
+
+# Label for Time
+time_var = tk.StringVar(master)
+time_var.set("")
+timeLabel = tk.Label(master, textvariable=time_var)
+timeLabel.place(y = 32, x = int(window_width)/2, anchor=tk.CENTER)
+
+# Label for Time text
+timeText_var = tk.StringVar(master)
+timeText_var.set("Time:")
+timeTextLabel = tk.Label(master, textvariable=timeText_var)
+timeTextLabel.place(y = 32, x = 50, anchor=tk.CENTER)
+
+
 
 tk.mainloop()
