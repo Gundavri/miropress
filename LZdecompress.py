@@ -1,8 +1,6 @@
 from sys import argv
 import time
 
-start_time = time.time()
-
 def is2sPower(num):
     while num > 1 :
         num /= 2
@@ -61,50 +59,62 @@ def findFileSize(fr):
     fileToWriteSize = int(binaryString, 2)
     codeToDecompress += readAndWriteFile(fr, 1)
 
-def writeInFile(code):
+def writeInFile(code, fileToWrite):
     while len(code) > 0:
         temp = code[0:8]
         code = code[8:]
         temp = int(temp, 2)
         fileToWrite.write(temp.to_bytes(1, "little"))
 
-codeToDecompress = ''
-codeToWrite = ''
-fileToWriteSize = 0
-keySize = 1
+def main(fileToRead, fileToWrite):
+	global codeToDecompress
+	
+	start_time = time.time()
+	
+	fileToRead = open(fileToRead, 'rb')
+	fileToWrite = open(fileToWrite, 'wb')
+	
+	codeToDecompress = ''
+	codeToWrite = ''
+	fileToWriteSize = 0
+	keySize = 1
 
 
-lexicon = {
-    '0': '0',
-    '1': '1'
-}
+	lexicon = {
+		'0': '0',
+		'1': '1'
+	}
 
-fileToRead = open(argv[1], 'rb')
-fileToWrite = open(argv[2], 'wb')
-bufferEliasCode(fileToRead)
-findFileSize(fileToRead)
+	bufferEliasCode(fileToRead)
+	findFileSize(fileToRead)
 
-while len(codeToDecompress)>0:
-    if keySize+1 > len(codeToDecompress):
-        codeToDecompress += readAndWriteFile(fileToRead, keySize//8 + 1)
-    key = codeToDecompress[0:keySize]
-    codeToDecompress = codeToDecompress[keySize:]
-    val = ''
-    try:
-        val = lexicon[key]
-    except:
-        break    
-    codeToWrite += val
-    codeToCutSize = len(codeToWrite)//8*8
-    writeInFile(codeToWrite[0:codeToCutSize])
-    codeToWrite = codeToWrite[codeToCutSize:]
-    lexicon[key] = val + '0'
-    lexicon[bin(len(lexicon))[2:]] = val + '1'
-    if is2sPower(len(lexicon)-1) and len(lexicon) != 2:
-        makeLexLonger(lexicon, keySize)
-        keySize += 1
+	while len(codeToDecompress)>0:
+		if keySize+1 > len(codeToDecompress):
+			codeToDecompress += readAndWriteFile(fileToRead, keySize//8 + 1)
+		key = codeToDecompress[0:keySize]
+		codeToDecompress = codeToDecompress[keySize:]
+		val = ''
+		try:
+			val = lexicon[key]
+		except:
+			break    
+		codeToWrite += val
+		codeToCutSize = len(codeToWrite)//8*8
+		writeInFile(codeToWrite[0:codeToCutSize], fileToWrite)
+		codeToWrite = codeToWrite[codeToCutSize:]
+		lexicon[key] = val + '0'
+		lexicon[bin(len(lexicon))[2:]] = val + '1'
+		if is2sPower(len(lexicon)-1) and len(lexicon) != 2:
+			makeLexLonger(lexicon, keySize)
+			keySize += 1
 
-fileToRead.close()
-fileToWrite.close()
+	fileToRead.close()
+	fileToWrite.close()
 
-print(str(time.time()-start_time) + ' --- Decompress Time')
+	print(str(time.time()-start_time) + ' --- Decompress Time')
+
+def init():
+	main(argv[1], argv[2])
+	
+if __name__ == '__main__':
+	init()

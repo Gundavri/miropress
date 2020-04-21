@@ -1,8 +1,6 @@
 from sys import argv
 import os, time
 
-start_time = time.time()
-
 def writeEliasCode(size):
     binarySize = bin(size)[2:]
     eliasPrefixSize = len(binarySize) - 1
@@ -19,7 +17,6 @@ def readAndWriteFile(fr, num):
         res += writeInBits(ord(single_byte))
     return res
 
-
 def writeInBits(single_byte):
     result = ''
     for i in range(0, 8):
@@ -30,7 +27,6 @@ def writeInBits(single_byte):
         else:
             result += '0'
     return result
-
 
 def findBiggestPref(lex):
     global longestKeySize
@@ -65,48 +61,60 @@ def changeLexicon(biggestPref, lex):
     if is2sPower(len(lex)-1):
         makeLexLonger(lex, currLen)
     
-def writeInFile(code):
+def writeInFile(code, fileToWrite):
     while len(code) > 0:
         temp = code[0:8]
         code = code[8:]
         temp = int(temp, 2)
         fileToWrite.write(temp.to_bytes(1, "little"))
+		
+def main(fileToRead, fileToWrite):
+	global longestKeySize
+	global codeToCompress
+	
+	start_time = time.time()
+	
+	size = os.path.getsize(fileToRead)
+	
+	fileToRead = open(fileToRead, 'rb')
+	fileToWrite = open(fileToWrite, 'wb')
+	
+	codeToCompress = ''
+	longestKeySize = 1
+	codeToWrite = writeEliasCode(size)
 
-size = os.path.getsize(argv[1])
+	lexicon = {
+		'0': '0',
+		'1': '1'
+	}
 
-codeToCompress = ''
-longestKeySize = 1
-codeToWrite = writeEliasCode(size)
+	codeToCompress = readAndWriteFile(fileToRead, 1)
 
-lexicon = {
-    '0': '0',
-    '1': '1'
-}
+	while len(codeToCompress) > 0:
+		if longestKeySize+1 > len(codeToCompress): 
+			codeToCompress += readAndWriteFile(fileToRead, (longestKeySize//8)+1)
+		biggestPref = findBiggestPref(lexicon)
+		while biggestPref not in lexicon:
+			biggestPref += '0'
+		codeToWrite += lexicon[biggestPref]
+		codeToCutSize = len(codeToWrite)//8*8
+		writeInFile(codeToWrite[0:codeToCutSize], fileToWrite)
+		codeToWrite = codeToWrite[codeToCutSize:]
+		changeLexicon(biggestPref, lexicon)
+		codeToCompress = codeToCompress[len(biggestPref):]
 
-fileToRead = open(argv[1], 'rb')
-fileToWrite = open(argv[2], 'wb')
+	codeToWrite += '1'
+	while len(codeToWrite)%8 != 0:
+		codeToWrite += '0'
 
-codeToCompress = readAndWriteFile(fileToRead, 1)
+	writeInFile(codeToWrite, fileToWrite)
+	fileToRead.close()
+	fileToWrite.close()
 
-while len(codeToCompress) > 0:
-    if longestKeySize+1 > len(codeToCompress): 
-        codeToCompress += readAndWriteFile(fileToRead, (longestKeySize//8)+1)
-    biggestPref = findBiggestPref(lexicon)
-    while biggestPref not in lexicon:
-        biggestPref += '0'
-    codeToWrite += lexicon[biggestPref]
-    codeToCutSize = len(codeToWrite)//8*8
-    writeInFile(codeToWrite[0:codeToCutSize])
-    codeToWrite = codeToWrite[codeToCutSize:]
-    changeLexicon(biggestPref, lexicon)
-    codeToCompress = codeToCompress[len(biggestPref):]
-
-codeToWrite += '1'
-while len(codeToWrite)%8 != 0:
-    codeToWrite += '0'
-
-writeInFile(codeToWrite)
-fileToRead.close()
-fileToWrite.close()
-
-print(str(time.time()-start_time) + ' --- Compress Time')
+	print(str(time.time()-start_time) + ' --- Compress Time')
+	
+def init():
+	main(argv[1], argv[2])
+	
+if __name__ == '__main__':
+	init()

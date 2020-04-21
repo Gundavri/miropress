@@ -1,8 +1,9 @@
 import tkinter as tk
-import os
 from tkinter import ttk
 from tkinter.filedialog import askopenfilename
 import time
+import LZcompress
+import LZdecompress
 
 MIROPRESS_EXTENSION = 'mir'
 
@@ -27,15 +28,16 @@ def compressClicked():
         removeThings()
         return
     compressedFileName = fileName[:fileName.rfind('.')+1] + MIROPRESS_EXTENSION
-
+    print('compressedFileName:', compressedFileName)
     try:
         startTime = time.time()
-        os.system('python3 LZcompress.py ' + fileName + ' ' + compressedFileName)
+        LZcompress.main(fileName, compressedFileName)
         time_var.set(str(time.time()-startTime))
         status_var.set('Compressed Succesfully')
         statusLabel.config(fg='green')
         output_var.set(compressedFileName[compressedFileName[:compressedFileName.rfind('/')].rfind('/'):])
     except:
+        print('oh shit')
         status_var.set('Something went wrong')
         statusLabel.config(fg='red')
         removeThings()
@@ -56,7 +58,7 @@ def extractClicked():
     decompressedFileName = fileName[:fileName.rfind('.')+1] + decompressedExt
     try:
         startTime = time.time()
-        os.system('python3 LZdecompress.py ' + fileName + ' ' + decompressedFileName)
+        LZdecompress.main(fileName, decompressedFileName)
         time_var.set(str(time.time()-startTime))
         status_var.set('Extracted Succesfully')
         statusLabel.config(fg='green')
@@ -75,7 +77,9 @@ def chooseClicked():
     fileName = askopenfilename()
     if fileName:
         status_var.set('')
+    print('fileName:', fileName)
     labelText = fileName[fileName[:fileName.rfind('/')].rfind('/'):]
+    print('labelText:', labelText)
     input_var.set(labelText)
 
 fileName = ''
